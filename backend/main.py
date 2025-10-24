@@ -8,6 +8,8 @@ from fastapi import FastAPI
 
 from src.db import DatabaseManager
 from src.settings import settings
+from src.routers.auth import router as auth_router
+from src.routers.kubo_router import router as kubo_router
 
 
 @asynccontextmanager
@@ -35,6 +37,9 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
 
 
 app = FastAPI(title=settings.app_name, lifespan=lifespan)
+
+app.include_router(auth_router)
+app.include_router(kubo_router)
 
 
 @app.get("/health")
