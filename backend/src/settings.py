@@ -27,6 +27,8 @@ class Settings(BaseSettings):
 
     cors_origins: List[AnyHttpUrl] | List[str] = ["http://localhost:3000"]
 
+    cerebras_api_key: str
+
 
 @lru_cache(maxsize=1)
 def get_settings() -> Settings:
