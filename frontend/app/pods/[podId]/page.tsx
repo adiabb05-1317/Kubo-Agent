@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Header } from "../../_components/Header";
-import { ChatPanel } from "../../_components/ChatPanel";
 import { BackgroundOrbs } from "../../_components/BackgroundOrbs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -27,12 +26,6 @@ export default function PodDetailsPage() {
   const statusMessage = useAppStore((state) => state.podsStatusMessage);
   const setDraft = useAppStore((state) => state.setBookingDraft);
   const bookPod = useAppStore((state) => state.bookPod);
-
-  const messages = useAppStore((state) => state.chatMessages);
-  const input = useAppStore((state) => state.chatInput);
-  const isSending = useAppStore((state) => state.isChatSending);
-  const setChatInput = useAppStore((state) => state.setChatInput);
-  const sendMessage = useAppStore((state) => state.sendChatMessage);
 
   const [pod, setPod] = useState<Pod | null>(null);
 
@@ -207,16 +200,6 @@ export default function PodDetailsPage() {
             </CardContent>
           </Card>
         </div>
-
-        {/* AI Concierge Chat */}
-        <ChatPanel
-          messages={messages}
-          input={input}
-          canSend={Boolean(input.trim()) && !isSending}
-          isSending={isSending}
-          onInputChange={setChatInput}
-          onSend={sendMessage}
-        />
       </main>
 
       <footer className="flex flex-col items-center gap-2 text-xs text-slate-400">

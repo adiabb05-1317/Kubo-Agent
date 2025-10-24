@@ -40,6 +40,11 @@ export function Header({ heroCopy, isAuthenticated, onLogout }: HeaderProps) {
                   My Bookings
                 </Button>
               </Link>
+              <Link href="/chat">
+                <Button variant="ghost" className="text-white hover:bg-white/10">
+                  Try AI Chat
+                </Button>
+              </Link>
               <Button
                 variant="outline"
                 className="border-white/20 text-white hover:bg-white/10"

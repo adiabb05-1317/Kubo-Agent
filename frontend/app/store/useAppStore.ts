@@ -62,6 +62,7 @@ interface AppState {
   loadChatHistory: () => Promise<void>;
   setChatInput: (value: string) => void;
   sendChatMessage: () => Promise<void>;
+  clearChatMessages: () => void;
 }
 
 const defaultDraft = (): BookingDraft => ({
@@ -273,5 +274,9 @@ export const useAppStore = create<AppState>((set, get) => ({
     } finally {
       set({ isChatSending: false });
     }
+  },
+
+  clearChatMessages: () => {
+    set({ chatMessages: [], chatInput: "" });
   },
 }));
