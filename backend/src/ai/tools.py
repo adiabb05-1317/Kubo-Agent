@@ -9,8 +9,7 @@ import json
 import re
 from typing import Any, Callable
 
-import httpx
-
+from ..db import DatabaseManager
 from ..settings import settings
 
 
@@ -126,8 +125,17 @@ def get_weather(location: str, unit: str = "celsius") -> str:
 # Kubo Booking System Tools
 # ============================================================================
 
-# Base URL for internal API calls
-API_BASE_URL = "http://localhost:8000"
+# Initialize database manager for tools
+_db_manager: DatabaseManager | None = None
+
+
+def _get_db_manager() -> DatabaseManager:
+    """Get or create the database manager instance for tools."""
+    global _db_manager
+    if _db_manager is None:
+        _db_manager = DatabaseManager()
+        _db_manager.connect()
+    return _db_manager
 
 
 def list_available_pods() -> str:
@@ -137,12 +145,33 @@ def list_available_pods() -> str:
         JSON string with list of pods including name, description, capacity, and price
     """
     try:
-        with httpx.Client() as client:
-            response = client.get(f"{API_BASE_URL}/kubo/pods")
-            response.raise_for_status()
-            return json.dumps(response.json())
+        db = _get_db_manager()
+        with db.cursor() as cur:
+            cur.execute(
+                """
+                SELECT id, name, description, capacity, price_cents, is_active, created_at, updated_at
+                FROM pods
+                ORDER BY name
+                """
+            )
+            rows = cur.fetchall()
+            
+            pods = [
+                {
+                    "id": row[0],
+                    "name": row[1],
+                    "description": row[2],
+                    "capacity": row[3],
+                    "price_cents": row[4],
+                    "is_active": row[5],
+                    "created_at": row[6].isoformat() if row[6] else None,
+                    "updated_at": row[7].isoformat() if row[7] else None,
+                }
+                for row in rows
+            ]
+            return json.dumps(pods)
     except Exception as exc:  # noqa: BLE001
-        return json.dumps({"error": f"Failed to fetch pods: {exc}"})
+        return json.dumps({"error": f"Failed to fetch pods: {str(exc)}"})
 
 
 def get_pod_details(pod_id: int) -> str:
@@ -155,16 +184,34 @@ def get_pod_details(pod_id: int) -> str:
         JSON string with pod details including name, description, capacity, and price
     """
     try:
-        with httpx.Client() as client:
-            response = client.get(f"{API_BASE_URL}/kubo/pods/{pod_id}")
-            response.raise_for_status()
-            return json.dumps(response.json())
-    except httpx.HTTPStatusError as exc:
-        if exc.response.status_code == 404:
-            return json.dumps({"error": "Pod not found"})
-        return json.dumps({"error": f"Failed to fetch pod: {exc}"})
+        db = _get_db_manager()
+        with db.cursor() as cur:
+            cur.execute(
+                """
+                SELECT id, name, description, capacity, price_cents, is_active, created_at, updated_at
+                FROM pods
+                WHERE id = %s
+                """,
+                (pod_id,),
+            )
+            row = cur.fetchone()
+            
+            if row is None:
+                return json.dumps({"error": "Pod not found"})
+            
+            pod = {
+                "id": row[0],
+                "name": row[1],
+                "description": row[2],
+                "capacity": row[3],
+                "price_cents": row[4],
+                "is_active": row[5],
+                "created_at": row[6].isoformat() if row[6] else None,
+                "updated_at": row[7].isoformat() if row[7] else None,
+            }
+            return json.dumps(pod)
     except Exception as exc:  # noqa: BLE001
-        return json.dumps({"error": f"Failed to fetch pod: {exc}"})
+        return json.dumps({"error": f"Failed to fetch pod: {str(exc)}"})
 
 
 def list_user_bookings() -> str:
@@ -174,12 +221,34 @@ def list_user_bookings() -> str:
         JSON string with list of bookings including pod, time slots, and status
     """
     try:
-        with httpx.Client() as client:
-            response = client.get(f"{API_BASE_URL}/kubo/bookings")
-            response.raise_for_status()
-            return json.dumps(response.json())
+        db = _get_db_manager()
+        with db.cursor() as cur:
+            cur.execute(
+                """
+                SELECT id, user_id, pod_id, start_time, end_time, status, total_price_cents, created_at, updated_at
+                FROM bookings
+                ORDER BY start_time DESC
+                """
+            )
+            rows = cur.fetchall()
+            
+            bookings = [
+                {
+                    "id": row[0],
+                    "user_id": row[1],
+                    "pod_id": row[2],
+                    "start_time": row[3].isoformat() if row[3] else None,
+                    "end_time": row[4].isoformat() if row[4] else None,
+                    "status": row[5],
+                    "total_price_cents": row[6],
+                    "created_at": row[7].isoformat() if row[7] else None,
+                    "updated_at": row[8].isoformat() if row[8] else None,
+                }
+                for row in rows
+            ]
+            return json.dumps(bookings)
     except Exception as exc:  # noqa: BLE001
-        return json.dumps({"error": f"Failed to fetch bookings: {exc}"})
+        return json.dumps({"error": f"Failed to fetch bookings: {str(exc)}"})
 
 
 def get_booking_details(booking_id: int) -> str:
@@ -192,16 +261,35 @@ def get_booking_details(booking_id: int) -> str:
         JSON string with booking details including pod, times, status, and price
     """
     try:
-        with httpx.Client() as client:
-            response = client.get(f"{API_BASE_URL}/kubo/bookings/{booking_id}")
-            response.raise_for_status()
-            return json.dumps(response.json())
-    except httpx.HTTPStatusError as exc:
-        if exc.response.status_code == 404:
-            return json.dumps({"error": "Booking not found"})
-        return json.dumps({"error": f"Failed to fetch booking: {exc}"})
+        db = _get_db_manager()
+        with db.cursor() as cur:
+            cur.execute(
+                """
+                SELECT id, user_id, pod_id, start_time, end_time, status, total_price_cents, created_at, updated_at
+                FROM bookings
+                WHERE id = %s
+                """,
+                (booking_id,),
+            )
+            row = cur.fetchone()
+            
+            if row is None:
+                return json.dumps({"error": "Booking not found"})
+            
+            booking = {
+                "id": row[0],
+                "user_id": row[1],
+                "pod_id": row[2],
+                "start_time": row[3].isoformat() if row[3] else None,
+                "end_time": row[4].isoformat() if row[4] else None,
+                "status": row[5],
+                "total_price_cents": row[6],
+                "created_at": row[7].isoformat() if row[7] else None,
+                "updated_at": row[8].isoformat() if row[8] else None,
+            }
+            return json.dumps(booking)
     except Exception as exc:  # noqa: BLE001
-        return json.dumps({"error": f"Failed to fetch booking: {exc}"})
+        return json.dumps({"error": f"Failed to fetch booking: {str(exc)}"})
 
 
 def create_booking(
@@ -224,26 +312,35 @@ def create_booking(
         JSON string with the created booking details
     """
     try:
-        with httpx.Client() as client:
-            response = client.post(
-                f"{API_BASE_URL}/kubo/bookings",
-                json={
-                    "user_id": user_id,
-                    "pod_id": pod_id,
-                    "start_time": start_time,
-                    "end_time": end_time,
-                    "status": "pending",
-                    "total_price_cents": total_price_cents,
-                },
+        db = _get_db_manager()
+        with db.cursor() as cur:
+            cur.execute(
+                """
+                INSERT INTO bookings (user_id, pod_id, start_time, end_time, status, total_price_cents)
+                VALUES (%s, %s, %s, %s, %s, %s)
+                RETURNING id, user_id, pod_id, start_time, end_time, status, total_price_cents, created_at, updated_at
+                """,
+                (user_id, pod_id, start_time, end_time, "pending", total_price_cents),
             )
-            response.raise_for_status()
-            return json.dumps(response.json())
-    except httpx.HTTPStatusError as exc:
-        if exc.response.status_code == 409:
-            return json.dumps({"error": "Booking conflict - time slot already taken"})
-        return json.dumps({"error": f"Failed to create booking: {exc}"})
+            row = cur.fetchone()
+            
+            booking = {
+                "id": row[0],
+                "user_id": row[1],
+                "pod_id": row[2],
+                "start_time": row[3].isoformat() if row[3] else None,
+                "end_time": row[4].isoformat() if row[4] else None,
+                "status": row[5],
+                "total_price_cents": row[6],
+                "created_at": row[7].isoformat() if row[7] else None,
+                "updated_at": row[8].isoformat() if row[8] else None,
+            }
+            return json.dumps(booking)
     except Exception as exc:  # noqa: BLE001
-        return json.dumps({"error": f"Failed to create booking: {exc}"})
+        error_str = str(exc)
+        if "uq_pod_time_window" in error_str or "duplicate key" in error_str:
+            return json.dumps({"error": "Booking conflict - time slot already taken"})
+        return json.dumps({"error": f"Failed to create booking: {error_str}"})
 
 
 def update_booking(
@@ -264,32 +361,58 @@ def update_booking(
         JSON string with the updated booking details
     """
     try:
-        payload = {}
+        updates: list[str] = []
+        params: list[Any] = []
+
         if start_time is not None:
-            payload["start_time"] = start_time
+            updates.append("start_time = %s")
+            params.append(start_time)
         if end_time is not None:
-            payload["end_time"] = end_time
+            updates.append("end_time = %s")
+            params.append(end_time)
         if status is not None:
-            payload["status"] = status
-        
-        if not payload:
+            updates.append("status = %s")
+            params.append(status)
+
+        if not updates:
             return json.dumps({"error": "No fields provided for update"})
-        
-        with httpx.Client() as client:
-            response = client.patch(
-                f"{API_BASE_URL}/kubo/bookings/{booking_id}",
-                json=payload,
+
+        updates.append("updated_at = CURRENT_TIMESTAMP")
+        params.append(booking_id)
+
+        db = _get_db_manager()
+        with db.cursor() as cur:
+            cur.execute(
+                f"""
+                UPDATE bookings
+                SET {', '.join(updates)}
+                WHERE id = %s
+                RETURNING id, user_id, pod_id, start_time, end_time, status, total_price_cents, created_at, updated_at
+                """,
+                tuple(params),
             )
-            response.raise_for_status()
-            return json.dumps(response.json())
-    except httpx.HTTPStatusError as exc:
-        if exc.response.status_code == 404:
-            return json.dumps({"error": "Booking not found"})
-        if exc.response.status_code == 409:
-            return json.dumps({"error": "Booking conflict - time slot already taken"})
-        return json.dumps({"error": f"Failed to update booking: {exc}"})
+            row = cur.fetchone()
+            
+            if row is None:
+                return json.dumps({"error": "Booking not found"})
+            
+            booking = {
+                "id": row[0],
+                "user_id": row[1],
+                "pod_id": row[2],
+                "start_time": row[3].isoformat() if row[3] else None,
+                "end_time": row[4].isoformat() if row[4] else None,
+                "status": row[5],
+                "total_price_cents": row[6],
+                "created_at": row[7].isoformat() if row[7] else None,
+                "updated_at": row[8].isoformat() if row[8] else None,
+            }
+            return json.dumps(booking)
     except Exception as exc:  # noqa: BLE001
-        return json.dumps({"error": f"Failed to update booking: {exc}"})
+        error_str = str(exc)
+        if "uq_pod_time_window" in error_str or "duplicate key" in error_str:
+            return json.dumps({"error": "Booking conflict - time slot already taken"})
+        return json.dumps({"error": f"Failed to update booking: {error_str}"})
 
 
 def cancel_booking(booking_id: int) -> str:
@@ -302,16 +425,17 @@ def cancel_booking(booking_id: int) -> str:
         JSON string with success or error message
     """
     try:
-        with httpx.Client() as client:
-            response = client.delete(f"{API_BASE_URL}/kubo/bookings/{booking_id}")
-            response.raise_for_status()
+        db = _get_db_manager()
+        with db.cursor() as cur:
+            cur.execute("DELETE FROM bookings WHERE id = %s RETURNING id", (booking_id,))
+            row = cur.fetchone()
+            
+            if row is None:
+                return json.dumps({"error": "Booking not found"})
+            
             return json.dumps({"success": True, "message": "Booking cancelled successfully"})
-    except httpx.HTTPStatusError as exc:
-        if exc.response.status_code == 404:
-            return json.dumps({"error": "Booking not found"})
-        return json.dumps({"error": f"Failed to cancel booking: {exc}"})
     except Exception as exc:  # noqa: BLE001
-        return json.dumps({"error": f"Failed to cancel booking: {exc}"})
+        return json.dumps({"error": f"Failed to cancel booking: {str(exc)}"})
 
 
 # ============================================================================
