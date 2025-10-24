@@ -4,9 +4,9 @@
 -- Users ---------------------------------------------------------------------
 INSERT INTO users (email, full_name, hashed_password, is_admin, is_active)
 VALUES
-  ('admin@example.com', 'Admin User', '$2b$12$9C0Vx1j7YI/6O0q4Gyk0GeSBylWb1N1F.8Ey96VEh9UpAJZciV06S', TRUE, TRUE),
-  ('manager@example.com', 'Manager User', '$2b$12$P8cGZr5n4zsP/D6.YB2SgO5Z1PFsKnz03Wx/ju0RduCMsZ/HXXIQK', TRUE, TRUE),
-  ('guest@example.com', 'Guest User', '$2b$12$4PNleVulYx.MR.cI43cbk.zY6z3Y0JVpaz6RtWLpmjHtkobaN6D2K', FALSE, TRUE)
+  ('admin@example.com', 'Admin User', 'AdminPass123', TRUE, TRUE),
+  ('manager@example.com', 'Manager User', 'ManagerPass123', TRUE, TRUE),
+  ('guest@example.com', 'Guest User', 'GuestPass123', FALSE, TRUE)
 ON CONFLICT (email) DO UPDATE
 SET full_name = EXCLUDED.full_name,
     hashed_password = EXCLUDED.hashed_password,
