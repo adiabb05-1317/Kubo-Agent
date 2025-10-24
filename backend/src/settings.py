@@ -3,12 +3,21 @@ from __future__ import annotations
 from functools import lru_cache
 from typing import List
 
+<<<<<<< HEAD
 from pydantic import AnyHttpUrl, Field, field_validator
+=======
+from pydantic import AnyHttpUrl, field_validator
+>>>>>>> aa196c5e9842a8e5b3ac5da174245f447e50d92e
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    model_config = SettingsConfigDict(env_file=(".env",), env_prefix="", case_sensitive=False)
+    model_config = SettingsConfigDict(
+        env_file=(".env",),
+        env_prefix="",
+        case_sensitive=False,
+        extra="ignore"  # Ignore extra env variables not defined in the model
+    )
 
     app_name: str = "Kubo Backend"
     app_env: str = "development"
