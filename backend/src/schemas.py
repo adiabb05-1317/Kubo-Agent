@@ -26,8 +26,8 @@ class UserOut(BaseModel):
 
 class UserCreate(BaseModel):
     email: EmailStr
-    password: str = Field(min_length=8)
-    full_name: Optional[str] = None
+    password: str
+    full_name: Optional[str] = ""
 
 
 class LoginIn(BaseModel):

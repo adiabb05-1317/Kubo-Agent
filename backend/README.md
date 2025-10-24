@@ -16,18 +16,26 @@ source .venv/bin/activate
 uv pip install -e .
 ```
 
-### Initialize DB (create tables for dev)
+### Initialize database
+The backend now ships with SQL scripts for schema + demo data. Run them against your local Postgres after it is running.
+
 ```bash
-python -m src.cli init-db
+# apply schema (tables, enums, triggers)
+psql -h 127.0.0.1 -U kubo_user -d kubodb -f backend/sql/migrations.sql
+
+# optional demo seed (users, pods, bookings)
+psql -h 127.0.0.1 -U kubo_user -d kubodb -f backend/sql/seed_data.sql
 ```
+
+> Tip: if you are running Postgres via docker compose, replace the command with `docker compose exec db psql -U kubo_user -d kubodb -f /app/backend/sql/migrations.sql` (copy the file into the container first or mount the repo).
 
 ### Run the API
 ```bash
-# option A: uvicorn directly
-uvicorn src.main:app --reload --host 127.0.0.1 --port 8000
+# fastest local loop
+uv run main.py
 
-# option B: console script (reads host/port from .env)
-kubo-serve
+# or use uvicorn directly
+uvicorn main:app --reload --host 127.0.0.1 --port 8000
 ```
 
 ### Environment

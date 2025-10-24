@@ -3,7 +3,7 @@ from __future__ import annotations
 from functools import lru_cache
 from typing import List
 
-from pydantic import AnyHttpUrl
+from pydantic import AnyHttpUrl, Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -25,9 +25,16 @@ class Settings(BaseSettings):
     cookie_secure: bool = False
     samesite: str = "lax"  # lax | none | strict
 
-    cors_origins: List[AnyHttpUrl] | List[str] = ["http://localhost:3000"]
+    cors_origins: List[AnyHttpUrl] | List[str] = Field(default_factory=lambda: ["http://localhost:3000"])
 
-    cerebras_api_key: str
+    cerebras_api_key: str | None = None
+
+    @field_validator("cors_origins", mode="before")
+    @classmethod
+    def split_cors_origins(cls, value: List[AnyHttpUrl] | List[str] | str) -> List[str] | List[AnyHttpUrl]:
+        if isinstance(value, str):
+            return [item.strip() for item in value.split(",") if item.strip()]
+        return value
 
 
 @lru_cache(maxsize=1)

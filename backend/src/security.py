@@ -3,21 +3,20 @@ from __future__ import annotations
 import hashlib
 import hmac
 import os
+from datetime import datetime, timedelta, timezone
+from typing import Optional
 
-from passlib.context import CryptContext
+from fastapi import Depends, HTTPException, Request
 
 from .settings import settings
 
 
-pwd_context = CryptContext(schemes=[settings.password_scheme], deprecated="auto")
-
-
 def hash_password(password: str) -> str:
-    return pwd_context.hash(password)
+    return password
 
 
-def verify_password(password: str, hashed: str) -> bool:
-    return pwd_context.verify(password, hashed)
+def verify_password(password: str, stored: str) -> bool:
+    return password == stored
 
 
 def generate_token() -> str:
