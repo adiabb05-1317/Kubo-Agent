@@ -177,6 +177,51 @@ async def list_bookings(request: Request) -> list[BookingOut]:
     return [_booking_from_row(row) for row in rows]
 
 
+def _get_current_user_id(request: Request) -> int | None:
+    """Resolve current user id from session cookie if present and valid."""
+    cookie = request.cookies.get("kubo_session")
+    if not cookie:
+        return None
+
+    from ..security import hash_token
+
+    token_h = hash_token(cookie)
+    db_manager = request.app.state.db_manager
+    with db_manager.cursor() as cur:
+        cur.execute(
+            """
+            SELECT u.id
+            FROM sessions s
+            JOIN users u ON u.id = s.user_id
+            WHERE s.token_hash = %s AND s.revoked = FALSE AND s.expires_at > NOW()
+            """,
+            (token_h,),
+        )
+        row = cur.fetchone()
+        return int(row[0]) if row else None
+
+
+@router.get("/my/bookings", response_model=list[BookingOut])
+async def list_my_bookings(request: Request) -> list[BookingOut]:
+    user_id = _get_current_user_id(request)
+    if user_id is None:
+        return []
+
+    db_manager = request.app.state.db_manager
+    with db_manager.cursor() as cur:
+        cur.execute(
+            """
+            SELECT id, user_id, pod_id, start_time, end_time, status, total_price_cents, created_at, updated_at
+            FROM bookings
+            WHERE user_id = %s
+            ORDER BY start_time DESC
+            """,
+            (user_id,),
+        )
+        rows = cur.fetchall()
+    return [_booking_from_row(row) for row in rows]
+
+
 @router.get("/bookings/{booking_id}", response_model=BookingOut)
 async def get_booking(booking_id: int, request: Request) -> BookingOut:
     db_manager = request.app.state.db_manager
