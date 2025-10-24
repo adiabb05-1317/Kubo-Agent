@@ -2,9 +2,9 @@
 
 import { create } from "zustand";
 
-import { AuthMode, BookingDraft, ChatMessage, Pod, SessionUser } from "../types";
+import { AuthMode, Booking, BookingDraft, ChatMessage, Pod, SessionUser } from "../types";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://127.0.0.1:8000";
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 const JSON_HEADERS = { "Content-Type": "application/json" } satisfies Record<string, string>;
 
 async function apiFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
@@ -38,6 +38,9 @@ interface AppState {
   bookingDrafts: Record<number, BookingDraft>;
   podsStatusMessage: string | null;
 
+  bookings: Booking[];
+  isLoadingBookings: boolean;
+
   chatMessages: ChatMessage[];
   chatInput: string;
   isChatSending: boolean;
@@ -53,6 +56,8 @@ interface AppState {
   loadPods: () => Promise<void>;
   setBookingDraft: (podId: number, draft: Partial<BookingDraft>) => void;
   bookPod: (pod: Pod) => Promise<void>;
+
+  loadMyBookings: () => Promise<void>;
 
   loadChatHistory: () => Promise<void>;
   setChatInput: (value: string) => void;
@@ -75,6 +80,9 @@ export const useAppStore = create<AppState>((set, get) => ({
   pods: [],
   bookingDrafts: {},
   podsStatusMessage: null,
+
+  bookings: [],
+  isLoadingBookings: false,
 
   chatMessages: [],
   chatInput: "",
@@ -118,7 +126,10 @@ export const useAppStore = create<AppState>((set, get) => ({
     try {
       await apiFetch("/auth/logout", { method: "POST" });
     } finally {
-      set({ user: null, pods: [], bookingDrafts: {}, chatMessages: [] });
+      set({ user: null, pods: [], bookingDrafts: {}, chatMessages: [], bookings: [] });
+      if (typeof window !== 'undefined') {
+        window.location.href = '/auth';
+      }
     }
   },
 
@@ -178,6 +189,20 @@ export const useAppStore = create<AppState>((set, get) => ({
       setTimeout(() => set({ podsStatusMessage: null }), 4000);
     } catch (err) {
       set({ podsStatusMessage: err instanceof Error ? err.message : "Booking failed" });
+    }
+  },
+
+  loadMyBookings: async () => {
+    const { user } = get();
+    if (!user) return;
+    
+    set({ isLoadingBookings: true });
+    try {
+      const bookings = await apiFetch<Booking[]>("/kubo/my/bookings", { method: "GET" });
+      set({ bookings, isLoadingBookings: false });
+    } catch (err) {
+      console.error("Failed to load bookings", err);
+      set({ bookings: [], isLoadingBookings: false });
     }
   },
 

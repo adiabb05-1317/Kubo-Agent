@@ -1,6 +1,8 @@
 "use client";
 
 import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 
 interface HeaderProps {
   heroCopy: {
@@ -13,37 +15,49 @@ interface HeaderProps {
 
 export function Header({ heroCopy, isAuthenticated, onLogout }: HeaderProps) {
   return (
-    <header className="glass-panel gradient-border relative flex flex-col gap-6 overflow-hidden p-8 md:flex-row md:items-center md:justify-between">
-      <div className="flex flex-col gap-3">
-        <div className="inline-flex items-center gap-2 rounded-full bg-[rgba(47,128,237,0.12)] px-4 py-1 text-sm text-[rgba(255,255,255,0.75)]">
-          <span className="inline-block h-2 w-2 rounded-full bg-[rgba(47,128,237,0.9)]" />
-          Pods live sync enabled
+    <header className="rounded-2xl border border-white/20 bg-gradient-to-br from-slate-900/90 to-slate-800/90 p-8 backdrop-blur-xl">
+      <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
+        <div className="flex flex-col gap-3">
+          <Badge variant="outline" className="w-fit border-blue-500/30 bg-blue-500/10 text-blue-300">
+            <span className="mr-2 inline-block h-2 w-2 animate-pulse rounded-full bg-blue-400" />
+            Pods live sync enabled
+          </Badge>
+          <h1 className="text-balance text-3xl font-bold tracking-tight text-white md:text-5xl">
+            {heroCopy.title}
+          </h1>
+          <p className="max-w-2xl text-lg text-slate-300">{heroCopy.subtitle}</p>
         </div>
-        <h1 className="text-balance text-3xl font-semibold tracking-tight md:text-5xl">{heroCopy.title}</h1>
-        <p className="max-w-2xl text-lg text-[rgba(240,243,255,0.78)]">{heroCopy.subtitle}</p>
+        <nav className="flex flex-wrap items-center gap-3">
+          <Link href="/">
+            <Button variant="ghost" className="text-white hover:bg-white/10">
+              Pods
+            </Button>
+          </Link>
+          {isAuthenticated ? (
+            <>
+              <Link href="/bookings">
+                <Button variant="ghost" className="text-white hover:bg-white/10">
+                  My Bookings
+                </Button>
+              </Link>
+              <Button
+                variant="outline"
+                className="border-white/20 text-white hover:bg-white/10"
+                onClick={() => void onLogout()}
+              >
+                Log out
+              </Button>
+            </>
+          ) : (
+            <Link href="/auth">
+              <Button className="bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700">
+                Sign In
+              </Button>
+            </Link>
+          )}
+        </nav>
       </div>
-      <nav className="flex flex-wrap items-center gap-3 text-sm text-[rgba(255,255,255,0.8)]">
-        <HeaderLink href="#auth" label="Auth" />
-        <HeaderLink href="#pods" label="Pods" />
-        <HeaderLink href="#chat" label="Chat Concierge" />
-        {isAuthenticated ? (
-          <button
-            className="rounded-full border border-[rgba(255,255,255,0.2)] px-4 py-2 text-xs uppercase tracking-wide text-[rgba(255,255,255,0.85)] transition hover:border-white"
-            onClick={() => void onLogout()}
-          >
-            Log out
-          </button>
-        ) : null}
-      </nav>
     </header>
-  );
-}
-
-function HeaderLink({ href, label }: { href: string; label: string }) {
-  return (
-    <Link className="rounded-full border border-transparent px-4 py-2 transition hover:border-[rgba(255,255,255,0.18)]" href={href}>
-      {label}
-    </Link>
   );
 }
 

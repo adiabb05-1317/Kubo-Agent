@@ -30,6 +30,18 @@ export interface BookingPayload {
   status: "pending" | "confirmed" | "cancelled";
 }
 
+export interface Booking {
+  id: number;
+  user_id: number;
+  pod_id: number;
+  start_time: string;
+  end_time: string;
+  status: "pending" | "confirmed" | "cancelled";
+  total_price_cents: number;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface ChatMessage {
   id: string;
   role: "user" | "assistant" | "tool";
