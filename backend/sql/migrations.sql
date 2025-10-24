@@ -79,6 +79,7 @@ CREATE TABLE IF NOT EXISTS bookings (
   end_time TIMESTAMPTZ NOT NULL,
   status bookingstatus NOT NULL DEFAULT 'confirmed',
   total_price_cents INTEGER NOT NULL DEFAULT 0,
+  guests JSONB DEFAULT '[]'::jsonb,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   CONSTRAINT uq_pod_time_window UNIQUE (pod_id, start_time, end_time)
