@@ -42,6 +42,7 @@ app = FastAPI(title=settings.app_name, lifespan=lifespan)
 
 app.include_router(auth_router)
 app.include_router(kubo_router)
+app.include_router(ai_router)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origins,
