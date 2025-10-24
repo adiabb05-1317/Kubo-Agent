@@ -149,3 +149,43 @@ async def me(request: Request) -> UserOut:
         )
 
 
+@router.post("/seed", response_model=list[UserOut], status_code=201)
+async def seed_users(request: Request) -> list[UserOut]:
+    samples = [
+        {"email": "admin@example.com", "full_name": "Admin User", "password": "AdminPass123", "is_admin": True},
+        {"email": "guest@example.com", "full_name": "Guest User", "password": "GuestPass123", "is_admin": False},
+    ]
+
+    db_manager = request.app.state.db_manager
+    created: list[UserOut] = []
+    with db_manager.cursor() as cur:
+        for sample in samples:
+            hashed = hash_password(sample["password"])
+            cur.execute(
+                """
+                INSERT INTO users (email, full_name, hashed_password, is_admin)
+                VALUES (%s, %s, %s, %s)
+                ON CONFLICT (email) DO UPDATE
+                SET full_name = EXCLUDED.full_name,
+                    hashed_password = EXCLUDED.hashed_password,
+                    is_admin = EXCLUDED.is_admin,
+                    updated_at = CURRENT_TIMESTAMP
+                RETURNING id, email, full_name, is_admin, is_active
+                """,
+                (sample["email"], sample["full_name"], hashed, sample["is_admin"]),
+            )
+            row = cur.fetchone()
+            created.append(
+                UserOut.model_validate(
+                    {
+                        "id": row[0],
+                        "email": row[1],
+                        "full_name": row[2],
+                        "is_admin": row[3],
+                        "is_active": row[4],
+                    }
+                )
+            )
+    return created
+
+

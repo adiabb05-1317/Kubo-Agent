@@ -1,15 +1,16 @@
 from __future__ import annotations
 
+from datetime import datetime, timedelta, timezone
 from typing import Any
 
 from fastapi import APIRouter, HTTPException, Request, Response, status
 from psycopg2 import errors
 
-from ..models import BookingStatus
 from ..schemas import (
     BookingCreate,
     BookingOut,
     BookingUpdate,
+    BookingStatus,
     PodCreate,
     PodOut,
     PodUpdate,

@@ -1,11 +1,16 @@
 from __future__ import annotations
 
+import enum
 from datetime import datetime
 from typing import Optional
 
 from pydantic import BaseModel, EmailStr, Field
 
-from .models import BookingStatus
+
+class BookingStatus(str, enum.Enum):
+    pending = "pending"
+    confirmed = "confirmed"
+    cancelled = "cancelled"
 
 
 class UserOut(BaseModel):
