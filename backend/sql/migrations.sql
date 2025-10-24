@@ -95,3 +95,15 @@ BEFORE UPDATE ON bookings
 FOR EACH ROW EXECUTE FUNCTION set_updated_at();
 
 
+-- Chat bot conversation history --------------------------------------------
+CREATE TABLE IF NOT EXISTS chat_history (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+  message_history JSONB NOT NULL DEFAULT '[]'::jsonb,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_chat_history_user
+  ON chat_history(user_id, created_at);
+
+
