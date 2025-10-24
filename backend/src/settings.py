@@ -3,11 +3,7 @@ from __future__ import annotations
 from functools import lru_cache
 from typing import List
 
-<<<<<<< HEAD
 from pydantic import AnyHttpUrl, Field, field_validator
-=======
-from pydantic import AnyHttpUrl, field_validator
->>>>>>> aa196c5e9842a8e5b3ac5da174245f447e50d92e
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
