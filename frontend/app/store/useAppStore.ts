@@ -185,7 +185,8 @@ export const useAppStore = create<AppState>((set, get) => ({
     const { user } = get();
     if (!user) return;
     try {
-      const history = await apiFetch<ChatMessage[]>("/chat/history", { method: "GET" });
+      // Fetch from backend AI router history endpoint
+      const history = await apiFetch<ChatMessage[]>("/ai/history", { method: "GET" });
       set({ chatMessages: history });
     } catch (err) {
       console.warn("Chat history not available", err);
@@ -207,18 +208,28 @@ export const useAppStore = create<AppState>((set, get) => ({
     set((state) => ({ chatMessages: [...state.chatMessages, outgoing], chatInput: "", isChatSending: true }));
 
     try {
-      const reply = await apiFetch<{ id?: string; reply?: string }>("/chat/send", {
-        method: "POST",
-        body: JSON.stringify({ message: trimmed }),
-      });
+      // Send full conversation to backend AI auto endpoint
+      const messages = get().chatMessages
+        .map((m) => ({ role: m.role === "assistant" ? "assistant" : m.role === "tool" ? "tool" : "user", content: m.content }))
+        .filter((m) => m.role === "assistant" || m.role === "user");
+      messages.push({ role: "user", content: trimmed });
 
+      const completion = await apiFetch<{ text?: string; conversation?: { role: string; content: string }[] }>(
+        "/ai/chat/auto",
+        {
+          method: "POST",
+          body: JSON.stringify({ messages }),
+        }
+      );
+
+      const aiText = completion.text ?? "";
       set((state) => ({
         chatMessages: [
           ...state.chatMessages,
           {
-            id: reply.id ?? crypto.randomUUID(),
+            id: crypto.randomUUID(),
             role: "assistant",
-            content: reply.reply ?? "Got it!",
+            content: aiText || "Got it!",
           },
         ],
       }));
