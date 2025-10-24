@@ -1,0 +1,2 @@
+[console_scripts]
+kubo-serve = src.server:run

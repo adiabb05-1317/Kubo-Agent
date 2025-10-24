@@ -1,6 +1,6 @@
-# Kubo-Agent
+# Kubo Booking Application
 
-## Eraser Diagram with image link of Kubo-Agent
+## Eraser Diagram with image link of Kubo Booking Application
 
 
-![Kubo-Agent](./images/diagram.png)
+![Kubo Booking Application](./images/diagram.png)
