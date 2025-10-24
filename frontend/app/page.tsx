@@ -1,11 +1,11 @@
 "use client";
 
 import { useEffect } from "react";
-import { Header } from "./components/Header";
-import { AuthCard } from "./components/AuthCard";
-import { PodsGrid } from "./components/PodsGrid";
-import { ChatPanel } from "./components/ChatPanel";
-import { BackgroundOrbs } from "./components/BackgroundOrbs";
+import { Header } from "./_components/Header";
+import { AuthCard } from "./_components/AuthCard";
+import { PodsGrid } from "./_components/PodsGrid";
+import { ChatPanel } from "./_components/ChatPanel";
+import { BackgroundOrbs } from "./_components/BackgroundOrbs";
 import { useAppStore } from "./store/useAppStore";
 
 export default function HomePage() {
